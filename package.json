@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon -w src -w api -x tsx api/index.ts",
-    "postinstall": "prisma generate",
-    "build": "prisma generate && prisma migrate deploy && rimraf dist && tsc",
+    "postinstall": "prisma generate && prisma migrate deploy",
+    "build": "rimraf dist && tsc",
     "start": "node dist/api/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
