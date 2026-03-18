@@ -5,6 +5,11 @@ const app = express();
 
 app.use(express.json());
 
+// Homepage Route
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'running', message: 'API is running' });
+});
+
 // API Routes
 app.use('/api', vmRoutes);
 
