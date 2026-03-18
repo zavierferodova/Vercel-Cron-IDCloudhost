@@ -1,0 +1,41 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Configuration {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VmSchedule {
+  id             Int      @id @default(autoincrement())
+  vmUuid         String
+  action         String   // "START" or "STOP"
+  cronExpression String   // e.g., "0 9 * * *"
+  timezone       String   @default("Asia/Jakarta")
+  isActive       Boolean  @default(true)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([vmUuid, action])
+}
+
+// Optional: for dynamic API keys if you wanted more than a single static key in .env
+model AppClient {
+  id        Int      @id @default(autoincrement())
+  name      String
+  apiKey    String   @unique
+  isActive  Boolean  @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
