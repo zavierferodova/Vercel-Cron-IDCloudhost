@@ -52,9 +52,10 @@ export class CronService {
         if (shouldExecute) {
            logs.push(`Matched schedule for VM ${schedule.vmUuid} - Action: ${schedule.action}`);
            
-           if (schedule.action === 'START') {
+           const actionLower = schedule.action.toLowerCase();
+           if (actionLower === 'start') {
               await this.idchRepo.startVm(schedule.vmUuid);
-           } else if (schedule.action === 'STOP') {
+           } else if (actionLower === 'stop') {
               await this.idchRepo.stopVm(schedule.vmUuid);
            }
            

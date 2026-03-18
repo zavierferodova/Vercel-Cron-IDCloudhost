@@ -18,7 +18,7 @@ model Configuration {
 model VmSchedule {
   id             Int      @id @default(autoincrement())
   vmUuid         String
-  action         String   // "START" or "STOP"
+  action         String   // "start" or "stop"
   cronExpression String   // e.g., "0 9 * * *"
   timezone       String   @default("Asia/Jakarta")
   isActive       Boolean  @default(true)

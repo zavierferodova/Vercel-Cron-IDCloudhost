@@ -6,7 +6,7 @@ export class VmController {
   constructor(
     private vmService: VmService,
     private cronService: CronService
-  ) {}
+  ) { }
 
   async listVms(req: Request, res: Response): Promise<void> {
     try {
@@ -37,13 +37,13 @@ export class VmController {
     try {
       const uuid = req.params.uuid as string;
       const { action, cronExpression, timezone, isActive } = req.body;
-      
+
       const schedule = await this.vmService.setVmSchedule({
-          vmUuid: uuid,
-          action,
-          cronExpression,
-          timezone: timezone || 'Asia/Jakarta',
-          isActive: isActive !== undefined ? isActive : true
+        vmUuid: uuid,
+        action,
+        cronExpression,
+        timezone: timezone || 'Asia/Jakarta',
+        isActive: isActive !== undefined ? isActive : true
       });
       res.status(201).json(schedule);
     } catch (error: any) {
@@ -65,7 +65,7 @@ export class VmController {
     try {
       const uuid = req.params.uuid as string;
       const action = (req.query.action as string) || (req.body && req.body.action);
-      
+
       const success = await this.vmService.removeVmSchedule(uuid, action);
       if (success) {
         res.status(200).json({ message: 'Schedule deleted successfully' });
@@ -78,12 +78,12 @@ export class VmController {
   }
 
   async runCron(req: Request, res: Response): Promise<void> {
-     try {
-       const phase = req.query.phase as string | undefined;
-       const result = await this.cronService.processSchedules(phase);
-       res.status(200).json({ message: 'Cron processed', phase: phase || 'all', result });
-     } catch (error: any) {
-       res.status(500).json({ error: error.message });
-     }
+    try {
+      const phase = req.query.phase as string | undefined;
+      const result = await this.cronService.processSchedules(phase);
+      res.status(200).json({ message: 'Cron processed', phase: phase || 'all', result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   }
 }
