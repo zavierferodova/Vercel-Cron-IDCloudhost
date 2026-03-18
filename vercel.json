@@ -14,8 +14,12 @@
   ],
   "crons": [
     {
-      "path": "/api/cron",
-      "schedule": "* * * * *"
+      "path": "/api/cron?phase=morning",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron?phase=night",
+      "schedule": "0 19 * * *"
     }
   ]
 }

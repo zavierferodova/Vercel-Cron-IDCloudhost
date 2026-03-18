@@ -11,7 +11,7 @@ export class CronService {
   /**
    * Called periodically by Vercel Cron
    */
-  async processSchedules(): Promise<{ success: number, failed: number, logs: string[] }> {
+  async processSchedules(phase?: string): Promise<{ success: number, failed: number, logs: string[] }> {
     const activeSchedules = await this.scheduleRepo.getActiveSchedules();
     const currentDate = new Date();
     const logs: string[] = [];
@@ -21,21 +21,35 @@ export class CronService {
 
     for (const schedule of activeSchedules) {
       try {
-        // Evaluate cron expression with the schedule's timezone
-        const interval = CronExpressionParser.parse(schedule.cronExpression, {
-           currentDate,
-           tz: schedule.timezone || 'Asia/Jakarta'
-        });
+        let shouldExecute = false;
 
-        // Check if the cron expression should have run in the last minute.
-        // Because vercel cron runs at specific intervals, we check if the previous interval matches our current time block.
-        const prev = interval.prev();
-        
-        // Let's assume the cron runs every minute. If `prev.getTime()` is within the last 60 seconds (roughly), trigger it.
-        // Real-world setup might require more robust fuzzy matching for serverless execution delays.
-        const timeDiffMs = currentDate.getTime() - prev.getTime();
-        
-        if (timeDiffMs >= 0 && timeDiffMs < 60000) { // 60 seconds tolerance
+        // First check if the expression is a phase string like "morning" or "night"
+        if (phase && schedule.cronExpression.toLowerCase() === phase.toLowerCase()) {
+          shouldExecute = true;
+        } else {
+          // Standard cron expression evaluation
+          try {
+            const interval = CronExpressionParser.parse(schedule.cronExpression, {
+               currentDate,
+               tz: schedule.timezone || 'Asia/Jakarta'
+            });
+
+            // Check if the cron expression should have run in the last minute.
+            const prev = interval.prev();
+            const timeDiffMs = currentDate.getTime() - prev.getTime();
+            
+            if (timeDiffMs >= 0 && timeDiffMs < 60000) { // 60 seconds tolerance
+               shouldExecute = true;
+            }
+          } catch (err: any) {
+            // Expression is neither a valid phase nor a valid cron expression
+            logs.push(`Invalid cron expression for VM ${schedule.vmUuid}: ${schedule.cronExpression}`);
+            failed++;
+            continue;
+          }
+        }
+
+        if (shouldExecute) {
            logs.push(`Matched schedule for VM ${schedule.vmUuid} - Action: ${schedule.action}`);
            
            if (schedule.action === 'START') {

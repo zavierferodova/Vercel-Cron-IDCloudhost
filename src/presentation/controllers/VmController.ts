@@ -79,8 +79,9 @@ export class VmController {
 
   async runCron(req: Request, res: Response): Promise<void> {
      try {
-       const result = await this.cronService.processSchedules();
-       res.status(200).json({ message: 'Cron processed', result });
+       const phase = req.query.phase as string | undefined;
+       const result = await this.cronService.processSchedules(phase);
+       res.status(200).json({ message: 'Cron processed', phase: phase || 'all', result });
      } catch (error: any) {
        res.status(500).json({ error: error.message });
      }
