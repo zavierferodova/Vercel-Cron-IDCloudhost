@@ -61,6 +61,15 @@ export class VmController {
     }
   }
 
+  async getAllSchedules(req: Request, res: Response): Promise<void> {
+    try {
+      const schedules = await this.vmService.getAllSchedules();
+      res.status(200).json(schedules);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
   async deleteSchedule(req: Request, res: Response): Promise<void> {
     try {
       const uuid = req.params.uuid as string;

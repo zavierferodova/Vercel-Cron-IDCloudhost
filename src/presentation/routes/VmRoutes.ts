@@ -39,6 +39,7 @@ const validate = (req: Request, res: Response, next: NextFunction): void => {
 
 // Routes
 vmRoutes.get('/vms', auth, (req, res) => vmController.listVms(req, res));
+vmRoutes.get('/vms/schedules', auth, (req, res) => vmController.getAllSchedules(req, res));
 vmRoutes.get('/vms/:uuid', auth, (req, res) => vmController.getVmDetail(req, res));
 vmRoutes.get('/vms/:uuid/schedule', auth, (req, res) => vmController.getSchedules(req, res));
 

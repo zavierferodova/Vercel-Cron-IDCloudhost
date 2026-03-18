@@ -20,9 +20,13 @@ export class VmService {
     return this.scheduleRepo.getScheduleByVmUUID(uuid);
   }
 
+  async getAllSchedules(): Promise<VmSchedule[]> {
+    return this.scheduleRepo.getSchedules();
+  }
+
   async setVmSchedule(schedule: Omit<VmSchedule, 'id' | 'createdAt' | 'updatedAt'>): Promise<VmSchedule> {
     // Basic validation
-    if (!['START', 'STOP'].includes(schedule.action)) {
+    if (!['start', 'stop'].includes(schedule.action)) {
       throw new Error(`Invalid action: ${schedule.action}`);
     }
     return this.scheduleRepo.upsertSchedule(schedule);
