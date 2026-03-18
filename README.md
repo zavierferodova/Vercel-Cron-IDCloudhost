@@ -1,14 +1,23 @@
-# IDCloudHost VM Controller (Vercel)
+# Vercel Cron IDCloudHost VM Controller
 
-This project is an Express.js API designed to manage Virtual Machines (VMs) on IDCloudHost. It connects to a PostgreSQL database using Prisma ORM to schedule cron jobs (start/stop VMs) and provides an API to list and retrieve VM details.
+This project is an Express.js API designed to manage Virtual Machines (VMs) on IDCloudHost. It connects to a PostgreSQL database using Prisma ORM to schedule cron jobs (start/stop VMs), heavily tailored to run on **Vercel Serverless Functions** and leverage **Vercel Cron Jobs**. 
 
-It's configured to run both as a standalone Express server (for local development and production) and as a Vercel Serverless Function.
+It implements a Clean Architecture (Domain, Application, Infrastructure, Presentation) and provides APIs to list VMs, create schedules, and process cron triggers.
+
+## Features
+
+- **List VMs:** Fetch running/stopped VMs from your IDCloudHost account.
+- **Set VM Schedules:** Schedule VMs to start or stop automatically. 
+- **Flexible Cron Expressions:** Supports standard Cron expressions (e.g. `0 9 * * *`), or simplified `morning` and `night` phases mapped directly to Vercel's Cron configurations.
+- **RESTful Endpoints:** Full CRUD for managing schedules per VM.
+- **Vercel native:** Automatically secures HTTP endpoints using `CRON_SECRET` for cron jobs, and `API_KEY` for standard management.
 
 ## Prerequisites
 
 - Node.js (v18 or higher)
 - PostgreSQL Database
 - [IDCloudHost API Token](https://console.idcloudhost.com/)
+- An active Vercel Project
 
 ## Environment Setup
 
@@ -19,11 +28,14 @@ Create a `.env` file in the root directory and populate it with your configurati
 # Example: postgresql://postgres:password@localhost:5432/idcloudhost_vm
 DATABASE_URL="postgresql://user:password@localhost:5432/mydb?schema=public"
 
-# The port your server will run on locally
+# The port your server will run on locally (Not needed on Vercel)
 PORT=3000
 
-# Your custom secret key to protect this API
+# Your custom secret key to protect this API (Client requests)
 API_KEY="my-secret-api-key"
+
+# Required for Vercel Cron Authentication (Vercel sets this up automatically in prod)
+CRON_SECRET="my-cron-secret"
 
 # Your IDCloudHost API Token
 IDCLOUDHOST_API_TOKEN="your-idcloudhost-token"
@@ -43,13 +55,44 @@ npx prisma generate
 
 ## Development Mode
 
-To run the application in development mode with hot-reloading (using `nodemon` and `tsx`):
+To run the application in development mode with hot-reloading:
 
 ```bash
 npm run dev
 ```
 
 The server will start on `http://localhost:3000` (or your configured `PORT`). Any changes to files in the `src` or `api` directories will automatically restart the server.
+
+## API Reference
+
+All requests must be authenticated. You can authorize by passing your API Key in the `x-api-key` header or as a Bearer token in the `Authorization` header.
+
+### Endpoints
+
+- `GET /api/vms`
+  List all VMs.
+- `GET /api/vms/:uuid`
+  Get details for a specific VM UUID.
+- `GET /api/vms/schedules`
+  Get a list of **all** schedules globally across all VMs.
+- `GET /api/vms/:uuid/schedule`
+  Get schedules specific to the VM UUID.
+- `POST /api/vms/:uuid/schedule`
+  Create or update a schedule. 
+  *Body:*
+  ```json
+  {
+    "action": "start", // or "stop"
+    "cronExpression": "morning", // "morning", "night", or standard cron e.g., "0 9 * * *"
+    "timezone": "Asia/Jakarta", // optional
+    "isActive": true // optional
+  }
+  ```
+- `DELETE /api/vms/:uuid/schedule`
+  Delete a specific schedule.
+  *Body or Query Parameter:* `?action=start` or `?action=stop`
+- `GET /api/cron`
+  The webhook consumed periodically by Vercel to trigger schedules. Can optionally pass `?phase=morning` to execute all "morning" specific jobs.
 
 ## Production Mode (Standalone Server)
 
@@ -65,18 +108,13 @@ npm run start
 
 ## Production Mode (Vercel Deployment)
 
-This repository is pre-configured to be deployed as a Vercel Serverless Function via the `api/index.ts` file.
+This repository is pre-configured to be deployed as a Vercel Serverless Function via the `api/index.ts` file and `vercel.json` configuration config.
 
 1. Install the Vercel CLI: `npm i -g vercel`
 2. Run `vercel` to link the project and deploy to a preview URL.
-3. Don't forget to add your Environment Variables (`DATABASE_URL`, `API_KEY`, etc.) in the Vercel Dashboard under **Settings > Environment Variables**.
+3. Add your Environment Variables (`DATABASE_URL`, `API_KEY`, `IDCLOUDHOST_API_TOKEN`) in the Vercel Dashboard under **Settings > Environment Variables**.
 4. Run `vercel --prod` to deploy to production.
 
-## API Usage Example
+## Vercel Cron Jobs
 
-Remember to pass your `API_KEY` in the headers for all requests:
-
-```bash
-curl -X GET http://localhost:3000/api/vms \
-  -H "x-api-key: my-secret-api-key"
-```
+Vercel will ping the `/api/cron` endpoint at the cadence defined in `vercel.json`. The codebase supports parsing both valid standard cron expressions and specialized phase string values (e.g., `morning`, `night`), ensuring VMs start precisely when needed without constantly pinging IDCloudHost resources.
